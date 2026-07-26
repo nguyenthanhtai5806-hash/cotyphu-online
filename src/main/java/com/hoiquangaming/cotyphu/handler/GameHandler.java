@@ -250,35 +250,51 @@ public class GameHandler extends TextWebSocketHandler {
         broadcastGameState();
     }
 
-    @Override
+   @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         sessions.remove(session);
-        List<String> turnOrder = gameState.getTurnOrder();
-        int idx = turnOrder.indexOf(session.getId());
-        turnOrder.remove(session.getId());
         
-        if (idx < currentTurnIndex) currentTurnIndex--;
-        if (!turnOrder.isEmpty() && currentTurnIndex >= turnOrder.size()) currentTurnIndex = 0;
-
+        // 1. Nhận diện kẻ bỏ trốn
+        boolean wasCurrentTurn = session.getId().equals(gameState.getCurrentTurnId());
+        int oldIndex = gameState.getTurnOrder().indexOf(session.getId());
+        
+        // 2. Xóa sổ hộ khẩu và thu hồi tài sản
+        gameState.getTurnOrder().remove(session.getId());
         Player p = gameState.getPlayers().remove(session.getId());
+
         if (p != null) {
             List<Integer> propsToWipe = new ArrayList<>();
             for (Property prop : gameState.getProperties().values()) {
                 if (prop.getOwnerSessionId().equals(session.getId())) propsToWipe.add(prop.getId());
             }
             for (int id : propsToWipe) gameState.getProperties().remove(id);
-            gameState.setLatestMessage("🔴 " + p.getName() + " sủi rồi! Đất đai thành vô chủ!");
-            
-            if (turnOrder.size() > 0 && idx == currentTurnIndex) {
-                 gameState.setCurrentTurnId(turnOrder.get(currentTurnIndex));
-                 gameState.setHasRolledThisTurn(false);
-            } else if (turnOrder.isEmpty()) {
-                 gameState.setCurrentTurnId("");
-            }
-            broadcastGameState();
+            gameState.setLatestMessage("🔴 " + p.getName() + " rớt mạng! Đất đai bị thu hồi!");
         }
-    }
 
+        // 3. Xử lý chia lại lượt thông minh
+        if (gameState.getTurnOrder().isEmpty()) {
+            // Phòng trống -> Reset
+            gameState.setCurrentTurnId("");
+            currentTurnIndex = 0;
+        } else if (wasCurrentTurn) {
+            // Nếu người trốn đang cầm lượt -> Chuyển ngay cho người kế tiếp
+            if (currentTurnIndex >= gameState.getTurnOrder().size()) {
+                currentTurnIndex = 0;
+            }
+            gameState.setCurrentTurnId(gameState.getTurnOrder().get(currentTurnIndex));
+            gameState.setHasRolledThisTurn(false);
+            gameState.setLatestMessage("⏩ Kẻ gian sủi tăm! Chuyển quyền đổ xúc xắc cho người tiếp theo!");
+        } else {
+            // Nếu người trốn chưa tới lượt -> Cập nhật lại bộ đếm để không bị lệch pha
+            if (oldIndex < currentTurnIndex) {
+                currentTurnIndex--;
+            }
+            if (currentTurnIndex >= gameState.getTurnOrder().size()) {
+                currentTurnIndex = 0;
+            }
+        }
+        broadcastGameState();
+    }
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         String payload = message.getPayload();
