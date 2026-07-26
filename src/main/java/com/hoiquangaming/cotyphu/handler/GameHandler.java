@@ -283,7 +283,7 @@ public class GameHandler extends TextWebSocketHandler {
             }
             gameState.setCurrentTurnId(gameState.getTurnOrder().get(currentTurnIndex));
             gameState.setHasRolledThisTurn(false);
-            gameState.setLatestMessage("⏩ Kẻ gian sủi tăm! Chuyển quyền đổ xúc xắc cho người tiếp theo!");
+            gameState.setLatestMessage("⏩ Kẻ gian sủi mất tăm! Chuyển quyền đổ xúc xắc cho người tiếp theo!");
         } else {
             // Nếu người trốn chưa tới lượt -> Cập nhật lại bộ đếm để không bị lệch pha
             if (oldIndex < currentTurnIndex) {
