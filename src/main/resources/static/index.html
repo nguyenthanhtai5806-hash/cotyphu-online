@@ -120,16 +120,48 @@ body{
 .btn-buy-deed:active, .btn-mortgage-deed:active, .btn-foreclose-deed:active, .btn-close-deed:active { transform: scale(0.96); }
 
 @media (max-width: 859px) {
-  body { padding-bottom: 120px; } /* Đẩy toàn bộ trang web lên cao hơn */
+  body { 
+    padding-bottom: 120px; 
+    -webkit-text-size-adjust: 100%; /* Ép chết Safari iOS */
+    text-size-adjust: none; /* Ép chết Android */
+  } 
+  
   .game-wrapper { padding: 12px 0; gap: 15px; }
   .left-column > .brand, .right-column { padding: 0 10px; }
   .board { width: 100vw; max-width: 100vw; border-radius: 0; }
   
-  /* FIX LỖI KHUẤT BẢNG TIN TRÊN ĐIỆN THOẠI */
-  .dash-layout { height: 350px; flex: 0 0 auto; } /* Khóa cứng chiều cao để bảng tin tự cuộn bên trong */
-  .action-log, .inventory-list { padding-bottom: 80px; } /* Lót thêm đệm ở dưới để không bị nút che */
-  
-  .action-bar { position: fixed; bottom: 0; left: 0; width: 100%; padding: 12px 10px calc(12px + env(safe-area-inset-bottom)); background: rgba(11, 22, 38, 0.95); backdrop-filter: blur(8px); z-index: 999; box-shadow: 0 -4px 20px rgba(0,0,0,0.5);}
+  /* CỐ ĐỊNH BẢNG TIN - VẬN HÀNH MƯỢT MÀ */
+  .dash-layout { height: 350px; flex: 0 0 auto; }
+  .action-log, .inventory-list { padding-bottom: 80px; }
+  .action-bar { 
+    position: fixed; bottom: 0; left: 0; width: 100%; 
+    padding: 12px 10px calc(12px + env(safe-area-inset-bottom)); 
+    background: rgba(11, 22, 38, 0.95); 
+    z-index: 999;
+  }
+
+  /* FIX FONT CỔ ĐIỂN - ÉP KÍCH THƯỚC CHỮ THEO % MÀN HÌNH */
+  .cell { 
+    padding: 1px !important; 
+    overflow: hidden !important; /* Tràn chữ là tự động cắt bỏ gọn gàng */
+  }
+  .cell-name { 
+    font-size: 2.2vw !important; 
+    line-height: 1.1 !important; 
+    word-break: break-all !important; 
+  }
+  .cell-price { 
+    font-size: 1.8vw !important; 
+    margin-top: 1px !important; 
+  }
+  .house-icon { 
+    font-size: 2vw !important; 
+  }
+  .player-token { 
+    width: 3.5vw !important; 
+    height: 3.5vw !important; 
+    font-size: 2.2vw !important; 
+  }
 }
 @media (min-width: 860px){
   body { overflow: hidden; justify-content: center; }
