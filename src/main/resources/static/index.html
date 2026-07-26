@@ -120,25 +120,24 @@ body{
 .btn-buy-deed:active, .btn-mortgage-deed:active, .btn-foreclose-deed:active, .btn-close-deed:active { transform: scale(0.96); }
 
 @media (max-width: 859px) {
-  body { 
-    padding-bottom: 120px; 
-    -webkit-text-size-adjust: 100%; /* Ép chết Safari iOS */
-    text-size-adjust: none; /* Ép chết Android */
-  } 
+  /* Cấm iPhone tự động phóng to chữ */
+  body { padding-bottom: 120px; -webkit-text-size-adjust: 100%; } 
   
   .game-wrapper { padding: 12px 0; gap: 15px; }
   .left-column > .brand, .right-column { padding: 0 10px; }
   .board { width: 100vw; max-width: 100vw; border-radius: 0; }
   
-  /* CỐ ĐỊNH BẢNG TIN - VẬN HÀNH MƯỢT MÀ */
+  /* FIX LỖI KHUẤT BẢNG TIN */
   .dash-layout { height: 350px; flex: 0 0 auto; }
   .action-log, .inventory-list { padding-bottom: 80px; }
-  .action-bar { 
-    position: fixed; bottom: 0; left: 0; width: 100%; 
-    padding: 12px 10px calc(12px + env(safe-area-inset-bottom)); 
-    background: rgba(11, 22, 38, 0.95); 
-    z-index: 999;
-  }
+  .action-bar { position: fixed; bottom: 0; left: 0; width: 100%; padding: 12px 10px calc(12px + env(safe-area-inset-bottom)); background: rgba(11, 22, 38, 0.95); backdrop-filter: blur(8px); z-index: 999; box-shadow: 0 -4px 20px rgba(0,0,0,0.5);}
+
+  /* FIX LỖI VỠ FONT TRÊN IPHONE / SAFARI */
+  .cell-name { font-size: clamp(3.5px, 1.8vw, 7px) !important; word-break: break-word !important; }
+  .cell-price { font-size: clamp(3px, 1.5vw, 6px) !important; }
+  .house-icon { font-size: clamp(3px, 1.5vw, 6px) !important; }
+  .player-token { width: clamp(8px, 3.5vw, 12px) !important; height: clamp(8px, 3.5vw, 12px) !important; font-size: clamp(4px, 2vw, 7px) !important; }
+}
 
   /* FIX FONT CỔ ĐIỂN - ÉP KÍCH THƯỚC CHỮ THEO % MÀN HÌNH */
   .cell { 
