@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Cờ Tỷ Phú Online</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+:root{
+  --ink:#0b1626; --panel:#122238; --panel-2:#1a3252; --panel-line:#274363;
+  --paper:#fcf9f2; --paper-ink:#20293a; --gold:#f0b429; --gold-soft:#f5cf6b;
+  --pink:#ff4d94; --jade:#2ecfa1; --coral:#ff6b4a; --indigo:#5b6cf0;
+  --danger:#ff5470; --muted:#93a4c2;
+  --f-display:'Baloo 2', sans-serif; --f-body:'Be Vietnam Pro', sans-serif; --f-mono:'Space Mono', monospace;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  font-family:var(--f-body);
+  background: radial-gradient(ellipse 900px 500px at 50% -10%, #152740 0%, #060b14 100%);
+  color:#eaf0fb; display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+  min-height:100vh; overflow-x:hidden; overflow-y:auto;
+}
+
+.game-wrapper { display: flex; flex-direction: column; width: 100%; max-width: 1250px; padding: 15px 2vw; gap: 20px;}
+.left-column { display: flex; flex-direction: column; gap: 12px; }
+.right-column { display: flex; flex-direction: column; gap: 12px; }
+
+.brand { font-family:var(--f-display); font-weight:800; font-size:clamp(18px, 4vw, 26px); color:var(--gold-soft); text-shadow:0 0 6px rgba(240,180,41,.55), 0 0 18px rgba(240,180,41,.25); margin-left: 10px;}
+
+.header-chips { display: flex; gap: 10px; flex-wrap: wrap; margin-left: 5px; }
+.room-chip { display:inline-flex; align-items:center; gap:8px; background:rgba(18, 34, 56, 0.8); align-self: flex-start; border:1px solid var(--panel-line); padding:6px 14px; border-radius:20px; font-size:12px; font-weight:700; color:var(--muted); backdrop-filter: blur(4px);}
+.live-dot { width:8px; height:8px; border-radius:50%; background:var(--jade); box-shadow:0 0 6px var(--jade); }
+.jackpot-chip { background: linear-gradient(135deg, #f0b429, #f5cf6b); color: #0b1626; border-color: #f0b429; box-shadow: 0 0 15px rgba(240,180,41,0.6); font-size: 13px; text-transform: uppercase;}
+#jackpotAmount { font-family: var(--f-mono); font-size: 15px; font-weight: 800; margin-left: 4px; color: #7a1c1c;}
+
+.wallet-container { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 5px; }
+.wallet-chip { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.5); padding: 8px 14px; border-radius: 12px; border-left: 4px solid var(--muted); box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-family: var(--f-body);}
+.wallet-chip.bankrupt { opacity: 0.5; border-left-color: #555 !important;}
+.wallet-chip.my-turn { background: rgba(46, 207, 161, 0.15); border-left-color: var(--jade); box-shadow: 0 0 12px rgba(46, 207, 161, 0.4);}
+.wallet-name { font-weight: 700; font-size: 13px; color: #fff; }
+.wallet-bal { font-family: var(--f-mono); font-weight: bold; font-size: 14px;}
+.bal-good { color: var(--jade); }
+.bal-bad { color: var(--danger); animation: blink 1s infinite alternate; }
+@keyframes blink { from { opacity: 1; } to { opacity: 0.6; } }
+
+.board { display:grid; grid-template-columns:repeat(15,minmax(0,1fr)); grid-template-rows:repeat(15,minmax(0,1fr)); width: 96vw; max-width: 750px; aspect-ratio: 1 / 1; height: auto; margin: 0 auto; gap: 2px; background: var(--ink); border: 4px solid #1a2f4d; outline: 4px solid var(--gold); outline-offset: -4px; border-radius: 12px; box-shadow: 0 30px 60px rgba(0,0,0,0.9), 0 0 40px rgba(240, 180, 41, 0.3), inset 0 0 15px rgba(0,0,0,0.8); container-type: inline-size;}
+
+.cell { background:var(--paper); position:relative; overflow:hidden; transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.25s ease, z-index 0.25s; cursor: pointer;}
+.cell:hover { transform: scale(1.18) translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.9), 0 10px 20px rgba(0,0,0,0.5); z-index: 20; border-radius: 8px;}
+.color-bar { position:absolute; top:0; left:0; width:100%; height:18%; min-height:4px; z-index:1; }
+.buildings-container { position: absolute; top: 0; left: 0; width: 100%; display: flex; justify-content: center; gap: 1px; z-index: 5; padding-top: 1px;}
+.house-icon { font-size: clamp(4px, 1.2cqw, 9px); line-height: 1; }
+
+.cell-body { position:absolute; top:20%; bottom:22%; left:0; right:0; z-index:2; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:0 1px; pointer-events: none;}
+.cell-name { font-family:var(--f-body); font-weight:700; color:var(--paper-ink); width:100%; text-align:center; line-height:1.1; letter-spacing:-0.2px; font-size:clamp(4px, 1.05cqw, 8px); display:block; word-break: keep-all; pointer-events: none;}
+.cell-price { font-family:var(--f-mono); color:#6b5a2f; font-weight:700; width:100%; text-align:center; font-size:clamp(3.5px, 0.95cqw, 7px); flex:0 0 auto; margin-top: 2px; pointer-events: none;}
+
+.players-container { position: absolute; bottom: 2px; left: 0; width: 100%; display: flex; justify-content: center; align-items: center; z-index: 5; pointer-events: none;}
+.player-token { width: clamp(9px, 2.5cqw, 14px); height: clamp(9px, 2.5cqw, 14px); background: #fff; border: 1px solid var(--panel-line); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: clamp(5px, 1.5cqw, 9px); box-shadow: 0 2px 4px rgba(0,0,0,0.5); margin-left: -5px; transition: transform 0.2s; color: #fff; font-weight: bold;}
+.player-token:first-child { margin-left: 0; }
+.player-token.bankrupt { background-color: #555 !important; border-color: #333; opacity: 0.7; z-index: 1;}
+
+.center-space { grid-column:2 / 15; grid-row:2 / 15; background: radial-gradient(circle at center, #1f3a5e 0%, #08101a 90%); display:flex; flex-direction:column; justify-content:center; align-items:center; gap:12px; border-radius: 8px; box-shadow: inset 0 0 50px rgba(0,0,0,0.9), 0 0 10px rgba(240,180,41,0.2); position: relative;}
+.center-title{ font-family:var(--f-display); font-weight:800; font-size:clamp(2rem, 8cqw, 3.5rem); color:var(--gold-soft); text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 15px rgba(240,180,41,0.6), 0 0 35px rgba(240,180,41,0.3); }
+.turn-info{ font-family:var(--f-body); font-weight:700; font-size:clamp(12px, 3cqw, 18px); padding:6px 18px; border-radius:30px; background:rgba(46,207,161,.15); color:var(--jade); border:1px solid rgba(46,207,161,.4); box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
+.turn-info.waiting{ background:rgba(147,164,194,.12); color:var(--muted); border-color:var(--panel-line); }
+.dice-ticket{ background:#fdf8ec; color:#7a1c1c; border-radius:8px; padding:6px 20px; font-family:var(--f-mono); font-weight:700; font-size:clamp(1.4rem, 5cqw, 2.5rem); letter-spacing:6px; box-shadow:0 6px 15px rgba(0,0,0,.5); margin-top:10px;}
+
+.center-popup { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9); width: 90%; max-width: 280px; background: rgba(255, 255, 255, 0.98); border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.8), 0 0 20px rgba(240, 180, 41, 0.4); display: none; flex-direction: column; z-index: 100; opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); font-family: var(--f-body); color: #1d1d1f; overflow: hidden;}
+.center-popup.show { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+
+.dashboard { flex:1 1 auto; width:100%; min-height:0; display:flex; flex-direction:column; gap:8px; }
+.tabs { display:flex; gap:6px; }
+.tab-btn { flex:1; font-family:var(--f-body); font-weight:700; font-size:13px; padding:10px; border-radius:8px 8px 0 0; background:var(--panel); color:var(--muted); border:1px solid var(--panel-line); border-bottom:none; cursor:pointer;}
+.tab-btn.active { background:var(--panel-2); color:var(--gold-soft); }
+
+.dash-layout { flex:1 1 auto; display:flex; gap:12px; min-height:200px; }
+.panel { flex:1; display:flex; flex-direction:column; border:1px solid var(--panel-line); border-radius:10px; background:rgba(18, 34, 56, 0.85); backdrop-filter: blur(8px); min-height:0; overflow:hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.4);}
+.panel-header { background:var(--panel-2); padding:10px 14px; font-family:var(--f-body); font-size:14px; font-weight:700; color:var(--gold-soft); border-bottom:1px solid var(--panel-line);}
+.action-log, .inventory-list { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:8px; font-size:13px; }
+.log-entry { padding:8px 12px; border-radius:6px; line-height:1.4; background:rgba(255,255,255,.04); border-left:3px solid var(--panel-line); word-wrap: break-word;}
+.log-sys{ border-left-color:var(--indigo); color:#c3cdf0; }
+.log-action{ border-left-color:var(--gold); color:#f3dfa6; }
+.log-alert{ border-left-color:var(--danger); color:#ffc4cf; }
+.inv-empty{ text-align:center; padding:20px; color:var(--muted); font-size:13px; font-style:italic; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #3b506e; border-radius: 10px; }
+
+.dash-layout[data-tab="log"] .panel.inventory-panel{ display:none; }
+.dash-layout[data-tab="inv"] .panel.log-panel{ display:none; }
+
+.action-bar { flex:0 0 auto; width:100%; display:flex; gap:10px; justify-content:center; }
+.btn-action { flex: 1; padding:15px 20px; font-family:var(--f-display); font-weight:700; font-size:18px; border:none; border-radius:10px; cursor:pointer; transition: transform 0.1s;}
+.btn-roll { background:linear-gradient(180deg, var(--gold-soft), var(--gold)); color:var(--ink); box-shadow:0 6px 18px rgba(240,180,41,.35); }
+.btn-end { background:linear-gradient(180deg, var(--jade), #24b087); color:#fff; box-shadow:0 6px 18px rgba(46,207,161,.35); display: none;}
+.btn-action:active { transform:translateY(2px); }
+.btn-action:disabled { background:var(--panel-2) !important; color:var(--muted) !important; box-shadow:none !important; cursor:not-allowed; }
+
+.modal-overlay { position: fixed; top:0; left:0; width:100vw; height:100vh; z-index: 9999; display: none; justify-content: center; align-items: center; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);}
+.deed-card { background: rgba(255, 255, 255, 0.95); border-radius: 18px; width: 90%; max-width: 320px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; overflow: hidden; font-family: var(--f-body); color: #1d1d1f; transform: scale(0.95); opacity: 0; transition: all 0.3s;}
+.modal-overlay.show .deed-card { transform: scale(1); opacity: 1; }
+.deed-header { padding: 22px; text-align: center; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+.deed-header h3 { font-family: var(--f-display); font-size: 24px; text-transform: uppercase; margin: 0;}
+.deed-body { padding: 20px 25px; font-weight: 600; font-size: 15px; }
+.deed-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.08); }
+.deed-price { font-family: var(--f-mono); font-weight: 700; color: #1d1d1f; }
+.rent-list { display: flex; flex-direction: column; gap: 4px; padding: 10px; background: rgba(0,0,0,0.03); border-radius: 8px; margin: 8px 0;}
+.rent-item { display: flex; justify-content: space-between; font-size: 13px; font-weight: 500;}
+.deed-actions { padding: 18px; display: flex; gap: 8px; background: #f5f5f7;}
+.btn-buy-deed, .btn-mortgage-deed, .btn-foreclose-deed, .btn-close-deed { flex: 1; padding: 10px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; transition: transform 0.1s; font-size: 13px; font-family: var(--f-body);}
+.btn-buy-deed { background: #0071e3; color: #fff;}
+.btn-mortgage-deed { background: var(--gold); color: #000; }
+.btn-foreclose-deed { background: var(--indigo); color: #fff; }
+.btn-close-deed { background: #e5e5ea; color: #1d1d1f; }
+.btn-buy-deed:active, .btn-mortgage-deed:active, .btn-foreclose-deed:active, .btn-close-deed:active { transform: scale(0.96); }
+
+@media (max-width: 859px) {
+  body { padding-bottom: 90px; }
+  .game-wrapper { padding: 12px 0; gap: 15px; }
+  .left-column > .brand, .right-column { padding: 0 10px; }
+  .board { width: 100vw; max-width: 100vw; border-radius: 0; }
+  .action-bar { position: fixed; bottom: 0; left: 0; width: 100%; padding: 12px 10px calc(12px + env(safe-area-inset-bottom)); background: rgba(11, 22, 38, 0.95); backdrop-filter: blur(8px); z-index: 999; box-shadow: 0 -4px 20px rgba(0,0,0,0.5);}
+}
+@media (min-width: 860px){
+  body { overflow: hidden; justify-content: center; }
+  .game-wrapper { flex-direction: row; align-items: center; justify-content: center; gap: 40px; margin: 0 auto; padding: 0; height: 100vh;}
+  .left-column { flex: 0 0 auto; width: min(85vh, 800px); }
+  .board { width: 100%; max-width: none; margin: 0; }
+  .right-column { flex: 0 0 350px; height: min(85vh, 800px); display: flex; flex-direction: column; }
+  .dashboard { flex: 1; height: 100%; display: flex; flex-direction: column; gap: 10px; margin: 0; min-height: 0;}
+  .tabs { display: none; }
+  .dash-layout { flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+  .dash-layout .panel { display: flex !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="game-wrapper">
+  <div class="left-column">
+    <div class="brand">CỜ TỶ PHÚ ONLINE</div>
+    <div class="board" id="monopolyBoard">
+      <div class="center-space" id="centerArea">
+        <div class="center-title">Cờ Tỷ Phú</div>
+        <div id="turnInfo" class="turn-info waiting">Đang kết nối...</div>
+        <div class="dice-ticket" id="diceResult">🎲</div>
+
+        <!-- MODAL ĐỔ XÚC XẮC ĐÔI -->
+        <div id="doubleDiceModal" class="center-popup">
+            <div class="deed-header" style="background-color: var(--gold); border-bottom: none;">
+                <h3 style="color: #000; font-size: clamp(18px, 4cqw, 24px);">🎲 XÚC XẮC ĐÔI!</h3>
+            </div>
+            <div class="deed-body" style="text-align: center; padding: 15px;">
+                <p style="margin-bottom: 10px; font-size: clamp(13px, 3cqw, 16px);">Đổ được đôi <b id="doubleValue" style="color:var(--danger); font-size: 1.3em;">...</b></p>
+                <p style="color: var(--muted); margin-bottom: 15px; font-size: clamp(11px, 2.5cqw, 14px);">Chọn chiến thuật của bạn:</p>
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <button id="btnMoveHalf" class="btn-buy-deed" style="background: var(--indigo); color: #fff;">Đi nửa bước</button>
+                    <button id="btnMoveFull" class="btn-buy-deed" style="background: var(--danger); color: #fff;">Đi full</button>
+                </div>
+            </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="right-column">
+    <div class="header-chips">
+        <div class="room-chip"><span class="live-dot"></span>HỘI ANH EM</div>
+        <div class="room-chip jackpot-chip">🎰 NỔ HŨ: <span id="jackpotAmount">100$</span></div>
+    </div>
+    
+    <div class="wallet-container" id="playerListBalances"></div>
+
+    <div class="dashboard">
+      <div class="tabs">
+        <button class="tab-btn active" id="tabLogBtn">📢 Bảng Tin</button>
+        <button class="tab-btn" id="tabInvBtn">🎒 Sổ Đỏ</button>
+      </div>
+      <div class="dash-layout" id="dashLayout" data-tab="log">
+        <div class="panel log-panel action-log-container">
+          <div class="panel-header">📢 Kênh Thế Giới</div>
+          <div class="action-log" id="actionLog"></div>
+        </div>
+        
+        <div class="panel inventory-panel inventory-container">
+          <div class="panel-header">🎒 Sổ Đỏ Của Tui</div>
+          <div class="inventory-list" id="inventoryList">
+            <div class="inv-empty">Chưa sở hữu lô đất nào</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    
+    <div class="action-bar">
+      <button class="btn-action btn-roll" id="rollBtn" disabled>Đổ Xúc Xắc</button>
+      <button class="btn-action btn-end" id="endTurnBtn">Qua Lượt ⏭️</button>
+    </div>
+  </div>
+</div>
+
+<div id="propertyCardModal" class="modal-overlay">
+    <div class="deed-card" id="deedCard">
+        <div class="deed-header" id="deedHeader">
+            <h3 id="deedTitle">Tên Đường</h3>
+        </div>
+        <div class="deed-body">
+            <div class="deed-row"><span>Trạng thái:</span> <span id="deedStatus">...</span></div>
+            <div class="deed-row"><span>💰 Giá Mua:</span> <span id="deedPrice" class="deed-price">0$</span></div>
+            <div class="rent-list" id="dynamicRentList"></div>
+            <div class="deed-row" id="buildCostRow"><span>🛠️ Phí cất nhà/căn:</span> <span id="deedBuildCost" class="deed-price">0$</span></div>
+            <div class="deed-row"><span style="font-weight:bold; color:var(--gold);">🏦 Cầm Cố:</span> <span id="deedMortgage" class="deed-price" style="color:var(--danger); font-size:18px;">0$</span></div>
+        </div>
+        <div class="deed-actions">
+            <button id="btnBuyDeed" class="btn-buy-deed">🛒 CHỐT ĐƠN</button>
+            <button id="btnMortgageDeed" class="btn-mortgage-deed" style="display:none;">🏦 CẦM CỐ</button>
+            <button id="btnForecloseDeed" class="btn-foreclose-deed" style="display:none;">🤑 THÂU TÓM</button>
+            <button id="btnCloseDeed" class="btn-close-deed">Đóng</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const dashLayout = document.getElementById('dashLayout');
+    const tabLogBtn = document.getElementById('tabLogBtn');
+    const tabInvBtn = document.getElementById('tabInvBtn');
+    tabLogBtn.addEventListener('click', ()=>{ dashLayout.dataset.tab = 'log'; tabLogBtn.classList.add('active'); tabInvBtn.classList.remove('active'); });
+    tabInvBtn.addEventListener('click', ()=>{ dashLayout.dataset.tab = 'inv'; tabInvBtn.classList.add('active'); tabLogBtn.classList.remove('active'); });
+
+    const saigonStreets = ["Cao Lỗ", "T.Q Bửu", "Phạm Hùng", "D.B Trạc", "Âu Cơ", "L.B Bích", "Q. Trung", "P.V Trị", "P.V Đồng", "K.V Cân", "Ng. Oanh", "Cộng Hòa", "H.V Thụ", "T. Chinh", "S.V Hạnh", "Thành Thái", "3 Tháng 2", "N.T Phương", "A.D Vương", "Ng. Trãi", "Trần Phú", "T.H Đạo", "CMT8", "Đ.B Phủ", "Võ Thị Sáu", "L.C Thắng", "P.X Long", "XVNT", "N.H Cảnh", "NTMK", "H.B Trưng", "NKKN", "Lê Duẩn", "T.Đ Thắng", "Hàm Nghi", "Lê Lợi", "Đồng Khởi"];
+    
+    const boardData = [];
+    for (let i = 0; i < 56; i++) {
+        if (i === 0) boardData.push({ id: 0, type: "START", name: "🏁 XUẤT<br>PHÁT", price: "+200$" });
+        else if (i === 14) boardData.push({ id: 14, type: "JAIL", name: "🔒 NHÀ<br>TÙ", price: "Giam" });
+        else if (i === 28) boardData.push({ id: 28, type: "JACKPOT", name: "💰 NỔ<br>HŨ", price: "Hốt" });
+        else if (i === 42) boardData.push({ id: 42, type: "GO_TO_JAIL", name: "🚓 VÀO<br>TÙ", price: "Bắt" });
+        else if (i === 7) boardData.push({ id: 7, type: "STATION", name: "🚌 BX Miền<br>Tây", price: 200, color: "#8e8e93" });
+        else if (i === 21) boardData.push({ id: 21, type: "STATION", name: "🚌 BX An<br>Sương", price: 200, color: "#8e8e93" });
+        else if (i === 35) boardData.push({ id: 35, type: "STATION", name: "🚌 BX Miền<br>Đông", price: 200, color: "#8e8e93" });
+        else if (i === 49) boardData.push({ id: 49, type: "STATION", name: "🚌 BX Ngã<br>Tư Ga", price: 200, color: "#8e8e93" });
+        else if (i === 19) boardData.push({ id: 19, type: "UTILITY", name: "⚡ CTY<br>Điện Lực", price: 150, color: "#ff9f0a" });
+        else if (i === 40) boardData.push({ id: 40, type: "UTILITY", name: "💧 CTY<br>Cấp Nước", price: 150, color: "#0a84ff" });
+        else if ([4, 18, 32, 46].includes(i)) boardData.push({ id: i, type: "CHANCE", name: "❓ CƠ<br>HỘI", price: "?" });
+        else if ([10, 24, 38, 52].includes(i)) boardData.push({ id: i, type: "CHEST", name: "🎁 KHÍ<br>VẬN", price: "?" });
+        else if (i === 12) boardData.push({ id: 12, type: "TAX", name: "💸 Đóng<br>Thuế", price: "-150$" });
+        else {
+            let color = "#ff6b4a";
+            if (i > 0 && i < 14) color = "#2fb8a6";
+            if (i > 14 && i < 28) color = "#ff4d94";
+            if (i > 28 && i < 42) color = "#ff6b4a";
+            if (i > 42 && i < 56) color = "#5b6cf0";
+            boardData.push({ id: i, type: "PROPERTY", name: saigonStreets.shift(), price: 80 + (i * 8), color: color });
+        }
+    }
+
+    function getGridPosition(i) {
+        if (i <= 14) return { row: 15, col: 15 - i }; else if (i <= 28) return { row: 29 - i, col: 1 };
+        else if (i <= 42) return { row: 1, col: i - 27 }; else return { row: i - 41, col: 15 };
+    }
+
+    const boardElement = document.getElementById('monopolyBoard');
+    const rollBtn = document.getElementById('rollBtn');
+    const endTurnBtn = document.getElementById('endTurnBtn');
+    const turnInfo = document.getElementById('turnInfo');
+    const actionLog = document.getElementById('actionLog');
+    let globalPropertiesMap = {}; 
+    let mySessionId = null; 
+
+    function addLog(msg, type="log-sys") {
+        const div = document.createElement('div');
+        div.className = `log-entry ${type}`; div.innerHTML = msg;
+        actionLog.appendChild(div); actionLog.scrollTop = actionLog.scrollHeight;
+    }
+
+    function renderBoard() {
+        const children = Array.from(boardElement.children);
+        children.forEach(c => { if(c.id !== 'centerArea') boardElement.removeChild(c); });
+
+        boardData.forEach((cellData, i) => {
+            const cellDiv = document.createElement('div');
+            cellDiv.className = 'cell'; cellDiv.id = `cell-${cellData.id}`;
+            const pos = getGridPosition(i);
+            cellDiv.style.gridRow = pos.row; cellDiv.style.gridColumn = pos.col;
+
+            let colorBarHTML = cellData.color ? `<div class="color-bar" style="background-color: ${cellData.color}"></div>` : `<div class="color-bar" style="background-color: transparent"></div>`;
+            let displayPrice = typeof cellData.price === 'number' ? `${cellData.price}$` : cellData.price;
+            
+            cellDiv.innerHTML = `
+                ${colorBarHTML}
+                <div class="buildings-container"></div>
+                <div class="cell-body">
+                    <div class="cell-name">${cellData.name}</div>
+                    <div class="cell-price">${displayPrice}</div>
+                </div>
+                <div class="players-container"></div>
+            `;
+            cellDiv.onclick = () => showPropertyDetails(cellData.id);
+            boardElement.appendChild(cellDiv);
+        });
+    }
+
+    let viewingCellId = -1;
+    function showPropertyDetails(cellId) {
+        const cell = boardData[cellId];
+        if (cell.type !== 'PROPERTY' && cell.type !== 'STATION' && cell.type !== 'UTILITY') return;
+        viewingCellId = cellId;
+        const price = cell.price;
+        const prop = globalPropertiesMap[cellId];
+        let houseBonus = 0;
+        if (prop && prop.houses) {
+            if (prop.houses === 1) houseBonus = 100; else if (prop.houses === 2) houseBonus = 200; else if (prop.houses === 3) houseBonus = 300; else if (prop.houses === 4) houseBonus = 500;
+        }
+        const mortgage = Math.floor(price * 0.5) + houseBonus;
+
+        document.getElementById('deedTitle').innerText = cell.name.replace('<br>', ' ');
+        document.getElementById('deedHeader').style.backgroundColor = cell.color || '#333';
+        document.getElementById('deedPrice').innerText = price + "$";
+        document.getElementById('deedMortgage').innerText = mortgage + "$";
+
+        const rentList = document.getElementById('dynamicRentList');
+        const buildCostRow = document.getElementById('buildCostRow');
+
+        if (cell.type === 'STATION') {
+            buildCostRow.style.display = 'none'; 
+            rentList.innerHTML = `<div class="rent-item"><span>1 BX: 20$</span></div><div class="rent-item"><span>2 BX: 40$</span></div><div class="rent-item"><span>3 BX: 80$</span></div><div class="rent-item" style="color:var(--indigo)"><span>4 BX: 160$</span></div>`;
+        } else if (cell.type === 'UTILITY') {
+            buildCostRow.style.display = 'none'; 
+            rentList.innerHTML = `<div class="rent-item"><span>1 CTY: Xúc xắc x5</span></div><div class="rent-item" style="color:var(--indigo)"><span>2 CTY: Xúc xắc x10</span></div>`;
+        } else {
+            buildCostRow.style.display = 'flex'; 
+            const rentBase = Math.floor(price * 0.1); 
+            const buildCost = Math.floor(price * 0.5); 
+            document.getElementById('deedBuildCost').innerText = buildCost + "$";
+            rentList.innerHTML = `<div class="rent-item" style="color:var(--danger)"><span>Bãi trống: ${rentBase}$</span></div><div class="rent-item"><span>1 Nhà: ${rentBase * 2}$</span></div><div class="rent-item"><span>2 Nhà: ${rentBase * 4}$</span></div><div class="rent-item"><span>3 Nhà: ${rentBase * 6}$</span></div><div class="rent-item" style="color:var(--indigo)"><span>Khách sạn: ${rentBase * 10}$</span></div>`;
+        }
+
+        const btnBuyDeed = document.getElementById('btnBuyDeed');
+        const btnMortgageDeed = document.getElementById('btnMortgageDeed');
+        const btnForecloseDeed = document.getElementById('btnForecloseDeed');
+        btnBuyDeed.style.display = 'none'; btnMortgageDeed.style.display = 'none'; btnForecloseDeed.style.display = 'none';
+
+        if (prop !== undefined) {
+            if (prop.mortgaged) {
+                document.getElementById('deedStatus').innerText = "Đang Cắm Bank 🏦";
+                document.getElementById('deedStatus').style.color = "var(--gold)"; 
+                btnMortgageDeed.style.display = 'block'; btnMortgageDeed.innerHTML = "✨ CHUỘC ĐẤT";
+                btnMortgageDeed.onclick = () => { if (ws && ws.readyState === WebSocket.OPEN) ws.send(`REDEEM:${viewingCellId}`); document.getElementById('btnCloseDeed').click(); };
+                const foreclosePrice = price + (prop.houses * Math.floor(price * 0.5));
+                btnForecloseDeed.style.display = 'block'; btnForecloseDeed.innerHTML = `🤑 THÂU TÓM (${foreclosePrice}$)`;
+                btnForecloseDeed.onclick = () => { if (ws && ws.readyState === WebSocket.OPEN) ws.send(`FORECLOSE:${viewingCellId}`); document.getElementById('btnCloseDeed').click(); };
+            } else {
+                document.getElementById('deedStatus').innerText = "Đã có chủ";
+                document.getElementById('deedStatus').style.color = "#ff3b30"; 
+                btnMortgageDeed.style.display = 'block'; btnMortgageDeed.innerHTML = "🏦 CẦM CỐ (" + mortgage + "$)";
+                btnMortgageDeed.onclick = () => { if (ws && ws.readyState === WebSocket.OPEN) ws.send(`MORTGAGE:${viewingCellId}`); document.getElementById('btnCloseDeed').click(); };
+                if (cell.type !== 'STATION' && cell.type !== 'UTILITY') {
+                    btnBuyDeed.style.display = 'block'; btnBuyDeed.innerHTML = "🏗️ CẤT NHÀ";
+                    btnBuyDeed.onclick = () => { if (ws && ws.readyState === WebSocket.OPEN) ws.send(`BUILD_HOUSE:${viewingCellId}`); document.getElementById('btnCloseDeed').click(); };
+                }
+            }
+        } else {
+            document.getElementById('deedStatus').innerText = "Vô chủ";
+            document.getElementById('deedStatus').style.color = "#34c759"; 
+            btnBuyDeed.style.display = 'block'; btnBuyDeed.innerHTML = "🛒 CHỐT ĐƠN";
+            btnBuyDeed.onclick = () => { if (ws && ws.readyState === WebSocket.OPEN) ws.send(`MANUAL_BUY:${viewingCellId}`); document.getElementById('btnCloseDeed').click(); };
+        }
+
+        const modal = document.getElementById('propertyCardModal');
+        modal.style.display = 'flex'; setTimeout(() => modal.classList.add('show'), 10);
+    }
+
+    document.getElementById('btnCloseDeed').onclick = () => {
+        const modal = document.getElementById('propertyCardModal');
+        modal.classList.remove('show'); setTimeout(() => modal.style.display = 'none', 300);
+    };
+
+    function updatePlayerTokensAndWallets(playersMap, currentTurnId) {
+        document.querySelectorAll('.players-container').forEach(el => el.innerHTML = '');
+        const walletList = document.getElementById('playerListBalances');
+        walletList.innerHTML = ''; 
+
+        for (const sessionId in playersMap) {
+            const player = playersMap[sessionId];
+            
+            const walletChip = document.createElement('div');
+            let isCurrent = (sessionId === currentTurnId) && !player.bankrupt;
+            walletChip.className = `wallet-chip ${player.bankrupt ? 'bankrupt' : ''} ${isCurrent ? 'my-turn' : ''}`;
+            walletChip.style.borderLeftColor = player.color || '#ccc';
+            
+            let statusHTML = '';
+            if (player.bankrupt) statusHTML = `<span class="wallet-bal" style="color: #999;">💀 PHÁ SẢN</span>`;
+            else if (player.money < 0) statusHTML = `<span class="wallet-bal bal-bad">${player.money}$ (NỢ)</span>`;
+            else statusHTML = `<span class="wallet-bal bal-good">${player.money}$</span>`;
+
+            let buffIcon = player.freeRentCard ? '🛡️' : '';
+            let lapIcon = player.lapCount > 0 ? ` (Vòng ${player.lapCount})` : '';
+
+            walletChip.innerHTML = `
+                <span class="wallet-name">${player.name.substring(player.name.length - 2)}${lapIcon}: ${buffIcon}</span> 
+                ${statusHTML}
+            `;
+            walletList.appendChild(walletChip);
+
+            const cellContainer = document.querySelector(`#cell-${player.position} .players-container`);
+            if (cellContainer) {
+                const token = document.createElement('div');
+                token.className = 'player-token';
+                token.style.backgroundColor = player.color || "#ff4d94"; 
+                token.innerHTML = player.name.substring(player.name.length - 2);
+                
+                if (player.bankrupt) { token.classList.add('bankrupt'); token.innerHTML = '💀'; }
+                cellContainer.appendChild(token);
+            }
+        }
+    }
+
+    function updateInventory(propertiesMap) {
+        const invList = document.getElementById('inventoryList');
+        invList.innerHTML = ''; 
+
+        let myProperties = [];
+        for (const cellId in propertiesMap) {
+            if (propertiesMap[cellId].ownerSessionId === mySessionId) {
+                myProperties.push(propertiesMap[cellId]);
+            }
+        }
+
+        if (myProperties.length === 0) {
+            invList.innerHTML = '<div class="inv-empty">Chưa sở hữu lô đất nào</div>';
+            return;
+        }
+
+        myProperties.forEach(prop => {
+            const cellData = boardData[prop.id];
+            const div = document.createElement('div');
+            div.style.display = 'flex'; div.style.alignItems = 'center'; div.style.justifyContent = 'space-between';
+            div.style.padding = '10px 12px'; div.style.background = 'rgba(255,255,255,0.05)';
+            div.style.borderRadius = '8px'; div.style.cursor = 'pointer'; div.style.marginBottom = '8px';
+            div.style.transition = 'background 0.2s';
+            
+            div.onmouseover = () => div.style.background = 'rgba(255,255,255,0.1)';
+            div.onmouseout = () => div.style.background = 'rgba(255,255,255,0.05)';
+            div.onclick = () => showPropertyDetails(prop.id);
+
+            let colorDot = `<div style="width:14px; height:14px; border-radius:4px; background:${cellData.color || '#8e8e93'}; margin-right:10px; box-shadow: 0 0 5px rgba(0,0,0,0.5);"></div>`;
+            
+            let propName = cellData.name.replace('<br>', ' ');
+            if (prop.mortgaged) propName = `<span style="text-decoration: line-through; color: var(--muted);">${propName}</span> <span style="color:var(--gold); font-size:14px;" title="Đang Cắm Bank">🏦</span>`;
+
+            let housesHtml = '';
+            if (!prop.mortgaged && prop.houses > 0) {
+                if (prop.houses === 4) housesHtml = '<span style="font-size:14px;">🏨</span>';
+                else housesHtml = '<span style="font-size:12px; letter-spacing:-2px;">' + '🏠'.repeat(prop.houses) + '</span>';
+            }
+
+            div.innerHTML = `
+                <div style="display:flex; align-items:center; font-weight:700; font-size:13px; color:#eaf0fb;">
+                    ${colorDot} ${propName}
+                </div>
+                <div>${housesHtml}</div>
+            `;
+            invList.appendChild(div);
+        });
+    }
+
+    function updateProperties(propertiesMap, playersMap) {
+        globalPropertiesMap = propertiesMap; 
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.style.boxShadow = ''; 
+            const oldTag = cell.querySelector('.owner-tag'); if(oldTag) oldTag.remove();
+            const buildContainer = cell.querySelector('.buildings-container'); if(buildContainer) buildContainer.innerHTML = '';
+        });
+
+        for (const cellId in propertiesMap) {
+            const prop = propertiesMap[cellId];
+            const owner = playersMap[prop.ownerSessionId]; 
+            
+            if (owner && !owner.bankrupt) {
+                const cellElement = document.getElementById(`cell-${cellId}`);
+                if (cellElement) {
+                    cellElement.style.boxShadow = `inset 0 0 0 4px ${owner.color || '#ff4d94'}`; 
+                    const tag = document.createElement('div');
+                    tag.className = 'owner-tag';
+                    if (prop.mortgaged) {
+                        tag.innerHTML = `🏦 CẮM BANK`; tag.style.backgroundColor = 'var(--gold)'; tag.style.color = '#000';
+                    } else {
+                        tag.innerHTML = `⭐ ${owner.name.substring(owner.name.length - 2)}`; tag.style.backgroundColor = owner.color || '#333'; tag.style.color = '#fff';
+                    }
+                    tag.style.position = 'absolute'; tag.style.top = '16%'; tag.style.left = '0'; tag.style.width = '100%'; tag.style.fontSize = 'clamp(4px, 1cqw, 7.5px)'; tag.style.textAlign = 'center'; tag.style.zIndex = '4';
+                    cellElement.appendChild(tag);
+                    
+                    if (prop.houses && prop.houses > 0) { 
+                        const buildContainer = cellElement.querySelector('.buildings-container');
+                        if (prop.houses === 4) buildContainer.innerHTML = '<span class="house-icon">🏨</span>';
+                        else { for (let i = 0; i < prop.houses; i++) buildContainer.innerHTML += '<span class="house-icon">🏠</span>'; }
+                    }
+                }
+            }
+        }
+    }
+
+    let ws = null;
+    renderBoard();
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = protocol + '//' + window.location.host + '/game';
+
+    try {
+        ws = new WebSocket(wsUrl);
+        
+        ws.onmessage = function(event) {
+            if (typeof event.data === "string" && event.data.startsWith("YOUR_ID:")) {
+                mySessionId = event.data.split(":")[1];
+                return;
+            }
+            if (typeof event.data === "string" && event.data.startsWith("JACKPOT:")) {
+                document.getElementById('jackpotAmount').innerText = event.data.split(":")[1] + "$";
+                return;
+            }
+            if (typeof event.data === "string" && event.data.startsWith("ASK_DOUBLE:")) {
+                const val = parseInt(event.data.split(":")[1]);
+                const total = val * 2;
+                
+                document.getElementById('doubleValue').innerText = val;
+                document.getElementById('btnMoveHalf').innerText = `Đi ${val} ô`;
+                document.getElementById('btnMoveFull').innerText = `Đi ${total} ô`;
+                
+                const doubleModal = document.getElementById('doubleDiceModal');
+                
+                document.getElementById('btnMoveHalf').onclick = () => {
+                    ws.send(`MOVE_DOUBLE:${val}`);
+                    doubleModal.classList.remove('show');
+                    setTimeout(() => doubleModal.style.display = 'none', 300);
+                };
+                
+                document.getElementById('btnMoveFull').onclick = () => {
+                    ws.send(`MOVE_DOUBLE:${total}`);
+                    doubleModal.classList.remove('show');
+                    setTimeout(() => doubleModal.style.display = 'none', 300);
+                };
+                
+                doubleModal.style.display = 'flex';
+                setTimeout(() => doubleModal.classList.add('show'), 10);
+                return; 
+            }
+
+            let gameStateMap;
+            try { gameStateMap = JSON.parse(event.data); } catch (e) { return; }
+
+            // Lệnh cập nhật Nổ Hũ từ gói JSON
+            if (gameStateMap.jackpotPool !== undefined) {
+                document.getElementById('jackpotAmount').innerText = gameStateMap.jackpotPool + "$";
+            }
+
+            if (gameStateMap.latestMessage) addLog(gameStateMap.latestMessage, "log-action");
+            if (gameStateMap.dice1 && gameStateMap.dice2) {
+                document.getElementById('diceResult').innerHTML = `${gameStateMap.dice1} • ${gameStateMap.dice2}`;
+            }
+
+            const currentTurnId = gameStateMap.currentTurnId;
+            const hasRolled = gameStateMap.hasRolledThisTurn;
+            const players = gameStateMap.players;
+
+            if (players) updatePlayerTokensAndWallets(players, currentTurnId);
+            if (gameStateMap.properties && players) {
+                updateProperties(gameStateMap.properties, players);
+                updateInventory(gameStateMap.properties);
+            }
+
+            if (mySessionId === currentTurnId) {
+                turnInfo.innerHTML = "👇 ĐẾN LƯỢT BẠN!";
+                turnInfo.style.color = "#fff"; turnInfo.style.backgroundColor = "var(--jade)";
+                
+                if (!hasRolled) {
+                    rollBtn.style.display = 'block'; rollBtn.disabled = false;
+                    endTurnBtn.style.display = 'none';
+                } else {
+                    rollBtn.style.display = 'none';
+                    endTurnBtn.style.display = 'block'; endTurnBtn.disabled = false;
+                }
+            } else {
+                let currentName = players[currentTurnId] ? players[currentTurnId].name : "Ai đó";
+                turnInfo.innerHTML = "⏳ Chờ " + currentName + " đi...";
+                turnInfo.style.color = "var(--muted)"; turnInfo.style.backgroundColor = "transparent";
+                
+                rollBtn.style.display = 'block'; rollBtn.disabled = true;
+                endTurnBtn.style.display = 'none';
+            }
+        };
+    } catch (error) {
+        turnInfo.innerHTML = "❌ Mất kết nối!";
+    }
+
+    rollBtn.addEventListener('click', () => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send("ROLL_DICE");
+            document.getElementById('diceResult').innerHTML = `...`;
+            rollBtn.disabled = true;
+        }
+    });
+
+    endTurnBtn.addEventListener('click', () => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send("END_TURN");
+            endTurnBtn.disabled = true;
+        }
+    });
+</script>
+</body>
+</html>
