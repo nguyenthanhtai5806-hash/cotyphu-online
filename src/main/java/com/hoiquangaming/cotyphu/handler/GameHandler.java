@@ -295,27 +295,30 @@ public class GameHandler extends TextWebSocketHandler {
         }
         broadcastGameState();
     }
-  @Override
+ @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         String payload = message.getPayload();
         
+        // 1. KÉO BIẾN PLAYER LÊN ĐẦU TIÊN ĐỂ TẤT CẢ CÁC LỆNH ĐỀU XÀI CHUNG ĐƯỢC
+        Player player = gameState.getPlayers().get(session.getId());
+        if (player == null) return; // Nếu rớt mạng hoặc lỗi không thấy user thì dừng luôn
+        
+        // 2. XỬ LÝ LỆNH ĐỔI TÊN
         if (payload.startsWith("SET_NAME:")) {
             String newName = payload.substring(9).trim();
-            Player player = gameState.getPlayers().get(session.getId());
-            if (player != null) {
-                // Chống hack: Cắt tên nếu nhập quá dài
-                if (newName.length() > 15) newName = newName.substring(0, 15);
-                player.setName(newName);
-                
-                // Báo lên Kênh Thế Giới
-                gameState.setLatestMessage("👋 " + newName + " đã tham gia sòng bài!");
-                broadcastGameState();
-            }
+            // Chống hack: Cắt tên nếu nhập quá dài
+            if (newName.length() > 15) newName = newName.substring(0, 15);
+            player.setName(newName);
+            
+            // Báo lên Kênh Thế Giới
+            gameState.setLatestMessage("👋 " + newName + " đã tham gia sòng bài!");
+            broadcastGameState();
             return; // Đổi tên xong thì dừng, không chạy các lệnh dưới nữa
         }
 
         boolean isMyTurn = session.getId().equals(gameState.getCurrentTurnId());
 
+        // 3. CÁC LỆNH PHÍA DƯỚI BÂY GIỜ ĐÃ NHẬN DIỆN ĐƯỢC BIẾN 'player'
         if ("END_TURN".equals(payload)) {
             if (!isMyTurn) return;
             if (!gameState.isHasRolledThisTurn()) {
@@ -359,7 +362,6 @@ public class GameHandler extends TextWebSocketHandler {
             if (dice1 == dice2) {
                 gameState.setLatestMessage("🎲 " + player.getName() + " đổ ĐÔI " + dice1 + "! Chọn chiến thuật đi cưng!");
                 broadcastGameState();
-                // KÍCH HOẠT MODAL CHỌN ĐI NỬA BƯỚC HAY FULL BƯỚC
                 session.sendMessage(new TextMessage("ASK_DOUBLE:" + dice1));
                 return;
             }
