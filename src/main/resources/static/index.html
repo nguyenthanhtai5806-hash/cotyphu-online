@@ -239,6 +239,12 @@ body{
 </div>
 
 <script>
+    // 1. BẬT POPUP HỎI TÊN NGAY KHI VÀO GAME
+    let myName = prompt("Nhập tên của bạn để tham gia Cờ Tỷ Phú:", "");
+    if (!myName || myName.trim() === "") {
+        myName = "Khách_" + Math.floor(Math.random() * 100);
+    }
+
     const dashLayout = document.getElementById('dashLayout');
     const tabLogBtn = document.getElementById('tabLogBtn');
     const tabInvBtn = document.getElementById('tabInvBtn');
@@ -401,6 +407,10 @@ body{
         for (const sessionId in playersMap) {
             const player = playersMap[sessionId];
             
+            // 2. LẤY TÊN THẬT VÀ CHỮ CÁI ĐẦU TIÊN
+            let displayFullName = player.name; 
+            let firstLetter = displayFullName.charAt(0).toUpperCase();
+
             const walletChip = document.createElement('div');
             let isCurrent = (sessionId === currentTurnId) && !player.bankrupt;
             walletChip.className = `wallet-chip ${player.bankrupt ? 'bankrupt' : ''} ${isCurrent ? 'my-turn' : ''}`;
@@ -414,8 +424,9 @@ body{
             let buffIcon = player.freeRentCard ? '🛡️' : '';
             let lapIcon = player.lapCount > 0 ? ` (Vòng ${player.lapCount})` : '';
 
+            // HIỂN THỊ TÊN ĐẦY ĐỦ Ở KHU VỰC VÍ TIỀN
             walletChip.innerHTML = `
-                <span class="wallet-name">${player.name.substring(player.name.length - 2)}${lapIcon}: ${buffIcon}</span> 
+                <span class="wallet-name">${displayFullName}${lapIcon}: ${buffIcon}</span> 
                 ${statusHTML}
             `;
             walletList.appendChild(walletChip);
@@ -425,7 +436,9 @@ body{
                 const token = document.createElement('div');
                 token.className = 'player-token';
                 token.style.backgroundColor = player.color || "#ff4d94"; 
-                token.innerHTML = player.name.substring(player.name.length - 2);
+                
+                // CHỈ IN ĐÚNG 1 CHỮ CÁI LÊN QUÂN CỜ
+                token.innerHTML = firstLetter;
                 
                 if (player.bankrupt) { token.classList.add('bankrupt'); token.innerHTML = '💀'; }
                 cellContainer.appendChild(token);
@@ -503,9 +516,12 @@ body{
                     if (prop.mortgaged) {
                         tag.innerHTML = `🏦 CẮM BANK`; tag.style.backgroundColor = 'var(--gold)'; tag.style.color = '#000';
                     } else {
-                        tag.innerHTML = `⭐ ${owner.name.substring(owner.name.length - 2)}`; tag.style.backgroundColor = owner.color || '#333'; tag.style.color = '#fff';
+                        // HIỂN THỊ TÊN ĐẦY ĐỦ TRÊN Ô ĐẤT KHI MUA
+                        tag.innerHTML = `⭐ ${owner.name}`; 
+                        tag.style.backgroundColor = owner.color || '#333'; tag.style.color = '#fff';
                     }
                     tag.style.position = 'absolute'; tag.style.top = '16%'; tag.style.left = '0'; tag.style.width = '100%'; tag.style.fontSize = 'clamp(4px, 1cqw, 7.5px)'; tag.style.textAlign = 'center'; tag.style.zIndex = '4';
+                    tag.style.whiteSpace = 'nowrap'; tag.style.overflow = 'hidden'; tag.style.textOverflow = 'ellipsis'; // Chống tràn tên dài ra khỏi ô
                     cellElement.appendChild(tag);
                     
                     if (prop.houses && prop.houses > 0) { 
@@ -527,6 +543,11 @@ body{
     try {
         ws = new WebSocket(wsUrl);
         
+        // 3. GỬI TÊN LÊN SERVER NGAY KHI VỪA KẾT NỐI
+        ws.onopen = function() {
+            ws.send("SET_NAME:" + myName);
+        };
+
         ws.onmessage = function(event) {
             if (typeof event.data === "string" && event.data.startsWith("YOUR_ID:")) {
                 mySessionId = event.data.split(":")[1];
@@ -566,7 +587,6 @@ body{
             let gameStateMap;
             try { gameStateMap = JSON.parse(event.data); } catch (e) { return; }
 
-            // Lệnh cập nhật Nổ Hũ từ gói JSON
             if (gameStateMap.jackpotPool !== undefined) {
                 document.getElementById('jackpotAmount').innerText = gameStateMap.jackpotPool + "$";
             }
