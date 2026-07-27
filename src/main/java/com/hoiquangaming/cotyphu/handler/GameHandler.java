@@ -295,11 +295,24 @@ public class GameHandler extends TextWebSocketHandler {
         }
         broadcastGameState();
     }
-    @Override
+  @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         String payload = message.getPayload();
-        Player player = gameState.getPlayers().get(session.getId());
-        if (player == null || player.isBankrupt()) return;
+        
+        if (payload.startsWith("SET_NAME:")) {
+            String newName = payload.substring(9).trim();
+            Player player = gameState.getPlayers().get(session.getId());
+            if (player != null) {
+                // Chống hack: Cắt tên nếu nhập quá dài
+                if (newName.length() > 15) newName = newName.substring(0, 15);
+                player.setName(newName);
+                
+                // Báo lên Kênh Thế Giới
+                gameState.setLatestMessage("👋 " + newName + " đã tham gia sòng bài!");
+                broadcastGameState();
+            }
+            return; // Đổi tên xong thì dừng, không chạy các lệnh dưới nữa
+        }
 
         boolean isMyTurn = session.getId().equals(gameState.getCurrentTurnId());
 
