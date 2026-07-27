@@ -238,12 +238,44 @@ body{
     </div>
 </div>
 
+<!-- MODAL NHẬP TÊN SANG CHẢNH -->
+<div id="nameModal" class="modal-overlay show" style="display: flex; z-index: 9999; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); background: rgba(11,22,38,0.6);">
+    <div class="modal-content" style="max-width: 340px; width: 90%; text-align: center; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.1); background: rgba(20, 35, 58, 0.85); border-radius: 24px; padding: 35px 25px;">
+        <h2 style="color: var(--gold); margin-bottom: 5px; font-size: 26px; font-weight: 800; letter-spacing: 0.5px; text-shadow: 0 2px 10px rgba(246, 211, 101, 0.3);">CỜ TỶ PHÚ</h2>
+        <p style="color: #8e9bb0; margin-bottom: 25px; font-size: 15px;">Nhập danh xưng để tham gia sòng bài</p>
+        
+        <input type="text" id="playerNameInput" placeholder="VD: Tài Đẹp Trai" maxlength="12" style="width: 100%; padding: 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; font-size: 16px; margin-bottom: 20px; outline: none; text-align: center; font-weight: 600; transition: all 0.3s;">
+        
+        <button id="btnJoinGame" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #f6d365, #fda085); border: none; border-radius: 12px; color: #111; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 5px 20px rgba(246, 211, 101, 0.4); transition: transform 0.1s;">VÀO CHƠI NGAY</button>
+    </div>
+</div>
+  
 <script>
-    // 1. BẬT POPUP HỎI TÊN NGAY KHI VÀO GAME
-    let myName = prompt("Nhập tên của bạn để tham gia Cờ Tỷ Phú:", "");
-    if (!myName || myName.trim() === "") {
-        myName = "Khách_" + Math.floor(Math.random() * 100);
-    }
+    // --- GIAO DIỆN NHẬP TÊN XỊN XÒ ---
+    let myName = ""; 
+    
+    document.getElementById('btnJoinGame').onclick = () => {
+        let inputName = document.getElementById('playerNameInput').value.trim();
+        myName = inputName === "" ? "Khách_" + Math.floor(Math.random() * 100) : inputName;
+        
+        // Hiệu ứng mờ dần khi tắt Modal
+        const nameModal = document.getElementById('nameModal');
+        nameModal.classList.remove('show');
+        setTimeout(() => nameModal.style.display = 'none', 300);
+
+        // Đẩy tên lên máy chủ ngay lập tức nếu mạng đã thông
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send("SET_NAME:" + myName);
+        }
+    };
+
+    // Bắt sự kiện gõ xong nhấn phím Enter là bay vào game luôn
+    document.getElementById('playerNameInput').addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            document.getElementById('btnJoinGame').click();
+        }
+    });
 
     const dashLayout = document.getElementById('dashLayout');
     const tabLogBtn = document.getElementById('tabLogBtn');
@@ -407,7 +439,6 @@ body{
         for (const sessionId in playersMap) {
             const player = playersMap[sessionId];
             
-            // 2. LẤY TÊN THẬT VÀ CHỮ CÁI ĐẦU TIÊN
             let displayFullName = player.name; 
             let firstLetter = displayFullName.charAt(0).toUpperCase();
 
@@ -424,7 +455,6 @@ body{
             let buffIcon = player.freeRentCard ? '🛡️' : '';
             let lapIcon = player.lapCount > 0 ? ` (Vòng ${player.lapCount})` : '';
 
-            // HIỂN THỊ TÊN ĐẦY ĐỦ Ở KHU VỰC VÍ TIỀN
             walletChip.innerHTML = `
                 <span class="wallet-name">${displayFullName}${lapIcon}: ${buffIcon}</span> 
                 ${statusHTML}
@@ -437,7 +467,6 @@ body{
                 token.className = 'player-token';
                 token.style.backgroundColor = player.color || "#ff4d94"; 
                 
-                // CHỈ IN ĐÚNG 1 CHỮ CÁI LÊN QUÂN CỜ
                 token.innerHTML = firstLetter;
                 
                 if (player.bankrupt) { token.classList.add('bankrupt'); token.innerHTML = '💀'; }
@@ -516,12 +545,11 @@ body{
                     if (prop.mortgaged) {
                         tag.innerHTML = `🏦 CẮM BANK`; tag.style.backgroundColor = 'var(--gold)'; tag.style.color = '#000';
                     } else {
-                        // HIỂN THỊ TÊN ĐẦY ĐỦ TRÊN Ô ĐẤT KHI MUA
                         tag.innerHTML = `⭐ ${owner.name}`; 
                         tag.style.backgroundColor = owner.color || '#333'; tag.style.color = '#fff';
                     }
                     tag.style.position = 'absolute'; tag.style.top = '16%'; tag.style.left = '0'; tag.style.width = '100%'; tag.style.fontSize = 'clamp(4px, 1cqw, 7.5px)'; tag.style.textAlign = 'center'; tag.style.zIndex = '4';
-                    tag.style.whiteSpace = 'nowrap'; tag.style.overflow = 'hidden'; tag.style.textOverflow = 'ellipsis'; // Chống tràn tên dài ra khỏi ô
+                    tag.style.whiteSpace = 'nowrap'; tag.style.overflow = 'hidden'; tag.style.textOverflow = 'ellipsis'; 
                     cellElement.appendChild(tag);
                     
                     if (prop.houses && prop.houses > 0) { 
@@ -543,9 +571,11 @@ body{
     try {
         ws = new WebSocket(wsUrl);
         
-        // 3. GỬI TÊN LÊN SERVER NGAY KHI VỪA KẾT NỐI
         ws.onopen = function() {
-            ws.send("SET_NAME:" + myName);
+            // Khi kết nối thành công, nếu đã nhập tên thì gửi luôn
+            if (myName !== "") {
+                ws.send("SET_NAME:" + myName);
+            }
         };
 
         ws.onmessage = function(event) {
