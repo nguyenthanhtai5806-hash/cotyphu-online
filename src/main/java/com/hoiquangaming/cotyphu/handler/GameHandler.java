@@ -246,7 +246,6 @@ public class GameHandler extends TextWebSocketHandler {
         }
         
         session.sendMessage(new TextMessage("YOUR_ID:" + session.getId()));
-        gameState.setLatestMessage("🟢 " + playerName + " đã tham gia sòng bài!");
         broadcastGameState();
     }
 
